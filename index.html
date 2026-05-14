@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> Nexus - CS Benchmark</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div id="topbar">
+
+    <div id="logo">Nexus</div>
+
+    <div id="navLinks">
+        <span id="navQuiz">Benchmark</span>
+        <span id="navLeaderboard">Leaderboard</span>
+        <span id="navForum">Forum</span>
+        <span id="navAuth">Sign In</span>
+        <span id="profileNavButton" class="hidden" >Profile</span>
+        <span id="inboxNavButton" class="hidden">Inbox</span>
+        <span id="signOutNavButton" class="hidden" >Sign Out</span>
+    </div>
+
+</div>
+
+<div class="container">
+
+<div id="homeScreen" class = "screen">
+    <div class="home-card">
+    <h1 id = "title">Nexus - CS Benchmark</h1>
+    <p>Benchmark your aptitude across core CS domains.<br>
+    Compare your results to other students.</p>
+    <p id = "introParagraph">What this benchmark measures: <br>
+
+• Data structures and algorithms <br>
+• Systems reasoning   <br>
+• Analytical Reasoning    <br>
+• Code comprehension  <br> <br>
+Pseudocode conventions: <br>
+
+• Ranges use interval notation. For example from (1 to 3] does not include 1 but does include 3.  <br>
+• Variables update sequentially   <br>
+• Assume standard execution flow unless stated otherwise <br>
+• Variables are passed by reference unless otherwise stated. <br>
+• Assume loops terminate if condition becomes false after update <br> <br>
+Please do not access outside resources when taking this test. Completion should take approximately 30 minutes. The assessment is experimental and feedback is appreciated.</p>
+<button id="startButton">Start</button>
+</div>
+</div>
+
+<div id="testScreen" class="screen hidden">
+    <div class="test-card">
+
+    <div id="progressContainer">
+        <div id="progressBar"></div>
+    </div>
+
+<p id="progressText"></p>
+    <h2 id="questionText"></h2>
+
+    <pre id="codeBlock" class="hidden"></pre>
+
+    <div id="answerButtons" class="answers-container"></div>
+
+    <button id="nextButton">Next</button>
+    </div>
+</div>
+
+<div id="resultScreen" class="screen hidden">
+    <div class="results-card">
+<h1>Final Score</h1>
+
+<div id="scoreCircle">
+    <span id="scoreText"></span>
+</div>
+
+<p id="performanceText"></p>
+
+<h2>Category Breakdown</h2>
+
+<div id="categoryResults"></div>
+
+<h2>Recommended Focus</h2>
+<p id="recommendationText"></p>
+
+<p class="future-note">
+    Future versions will include percentile rankings, profiles, and peer comparison.
+</p>
+
+<p id="scoreSaveMessage" class="future-note"></p>
+
+<button id="restartButton">Restart</button>
+
+<div id="resultAuthPrompt" class="result-auth-prompt hidden">
+    <h3>Save your score</h3>
+    <p>Create a Nexus account to save your result, build your profile, and appear on the leaderboard.</p>
+    <button onclick="switchScreen(activeScreen, screens.auth)">Create Account</button>
+    <button class="secondary-button" onclick="switchScreen(activeScreen, screens.auth)">Sign In</button>
+</div>
+
+    </div>
+</div>
+
+<div id="sectionScreen" class="screen hidden">
+    <div class="section-card">
+    <h1 id="sectionTitle"></h1>
+    <p id="sectionDescription"></p>
+    <button id="continueButton">Start Section</button>
+    </div>
+</div>
+
+<div id="leaderboardScreen" class="screen hidden">
+    <div class="leaderboard-card">
+        <h1>Leaderboard</h1>
+        <p class="subtle">Top saved Nexus benchmark scores.</p>
+
+        <div id="leaderboardList"></div>
+    </div>
+</div>
+
+<div id="authScreen" class="screen hidden">
+    <div class="card auth-card">
+        <h1>Create your Nexus account</h1>
+        <p class="subtle">Save your score, build your profile, and compare with other students.</p>
+
+        <input id="authEmail" type="email" placeholder="Email">
+        <input id="authPassword" type="password" placeholder="Password">
+
+        <div class="auth-actions">
+            <button onclick="signUp()">Create account</button>
+            <button onclick="signIn()" class="secondary-button">Sign in instead</button>
+        </div>
+
+        <p id="authMessage"></p>
+    </div>
+</div>
+
+<section id="profileScreen" class="screen hidden">
+    <div class="card profile-card">
+        <div class="profile-header">
+            <div>
+                <h1>Your Profile</h1>
+                <p class="subtle">Build your Nexus identity for saved scores, leaderboards, and discovery.</p>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <div class="form-group">
+                <label>Username</label>
+                <input id="profileUsername" placeholder="superadmin">
+            </div>
+
+            <p>
+
+            <div class="form-group">
+                <label>Display Name</label>
+                <input id="profileDisplayName" placeholder="SuperAdmin">
+            </div>
+
+            <div class="form-group">
+                <label>School</label>
+                <input id="profileSchool" placeholder="University of Michigan">
+            </div>
+
+            <div class="form-group">
+                <label>Major</label>
+                <input id="profileMajor" placeholder="Computer Science">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Interests</label>
+                <input id="profileInterests" placeholder="AI, web development, systems, startups">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Bio</label>
+                <textarea id="profileBio" placeholder="Tell other students what you are working on."></textarea>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <button onclick="saveProfile()">Save Profile</button>
+            <p id="profileMessage"></p>
+        </div>
+
+        </br>
+        
+            <div class="card trust-card">
+                <p>
+    <strong>Trust:</strong>
+    <span id="privateTrustLevel"></span>
+</p>
+<p class="subtle">
+    Trust Level reflects consistent, constructive participation on Nexus.
+</p>
+            </div>
+
+
+        <div class="profile-scores">
+            <h2>Composite Score</h2>
+            <div id="privateCompositeScore"></div>
+            <h2>Previous Scores</h2>
+            <div id="previousScoresList"></div>
+        </div>
+
+    </div>
+</section>
+
+<section id="publicProfileScreen" class="screen hidden">
+    <div class="card profile-card">
+        <h1 id="publicDisplayName"></h1>
+        <p id="publicUsername" class="subtle"></p>
+
+        <p>
+    <strong>Trust:</strong>
+    <span id="publicTrustLevel"></span>
+</p>
+
+        <p><strong>School:</strong> <span id="publicSchool"></span></p>
+        <p><strong>Major:</strong> <span id="publicMajor"></span></p>
+        <p><strong>Interests:</strong> <span id="publicInterests"></span></p>
+
+        <div class="profile-scores">
+    <h2>Composite Score</h2>
+    <div id="publicCompositeScore"></div>
+    </div>
+
+        <h2>Bio</h2>
+        <p id="publicBio" class="subtle"></p>
+
+        <div class="message-box">
+        <h2>Send Message</h2>
+        <textarea id="publicMessageText" placeholder="Write a message..."></textarea>
+        <button onclick="sendMessageToPublicProfile()">Send Message</button>
+        <p id="publicMessageStatus" class="subtle"></p>
+</div>
+        <button onclick="switchScreen(activeScreen, screens.leaderboard); loadLeaderboard()">Back to Leaderboard</button>
+    </div>
+</section>
+
+<section id="inboxScreen" class="screen hidden">
+    <div class="card inbox-card">
+        <h1>Inbox</h1>
+        <p class="subtle">Messages from other Nexus users.</p>
+
+        <div id="inboxList"></div>
+    </div>
+</section>
+
+<section id="threadScreen" class="screen hidden">
+    <div class="card inbox-thread-card">
+    <button class="back-link" onclick="openInbox()">← Back to Inbox</button>
+        <h1 id="threadTitle">Conversation</h1>
+
+        <div id="threadMessages"></div>
+
+<div class="message-box">
+    <textarea id="threadReplyText" placeholder="Write a reply..."></textarea>
+
+    <div class="message-actions">
+        <button onclick="sendThreadReply()">Send Reply</button>
+    </div>
+
+    <p id="threadReplyStatus" class="subtle"></p>
+</div>
+    </div>
+</section>
+
+<section id="forumScreen" class="screen hidden">
+    <div class="card forum-card">
+        <h1>Forum</h1>
+        <p class="subtle">Discuss projects, scores, recruiting, and CS learning.</p>
+
+<div class="forum-controls">
+    <div class="forum-control-group">
+        <label>View category</label>
+        <select id="forumCategoryFilter" onchange="loadForumPosts()">
+            <option value="All">All Categories</option>
+            <option value="General">General</option>
+            <option value="Projects">Projects</option>
+            <option value="Study Help">Study Help</option>
+            <option value="Career / Internships">Career / Internships</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+            <option value="Top Scorers">Top Scorers</option>
+        </select>
+    </div>
+
+    <div class="forum-control-group">
+        <label>Post category</label>
+        <select id="postCategory">
+            <option value="General">General</option>
+            <option value="Projects">Projects</option>
+            <option value="Study Help">Study Help</option>
+            <option value="Career / Internships">Career / Internships</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+            <option value="Top Scorers">Top Scorers</option>
+        </select>
+    </div>
+</div>
+
+        <div class="create-post-box">
+            <input id="postTitle" placeholder="Post title">
+            <textarea id="postContent" placeholder="Write your post..."></textarea>
+            <button onclick="createForumPost()">Create Post</button>
+            <p id="forumMessage" class="subtle"></p>
+        </div>
+
+        <div id="forumPostsList"></div>
+    </div>
+</section>
+
+<section id="forumThreadScreen" class="screen hidden">
+    <div class="card forum-card">
+        <button class="back-link" onclick="openForum()">← Back to Forum</button>
+
+        <div id="threadPost"></div>
+
+        <h2>Comments</h2>
+        <div id="threadComments"></div>
+
+        <div class="create-post-box">
+            <textarea id="commentContent" placeholder="Write a comment..."></textarea>
+            <button onclick="createForumComment()">Post Comment</button>
+            <p id="commentMessage" class="subtle"></p>
+        </div>
+    </div>
+</section>
+
+<section id="nextStepScreen" class="screen hidden">
+    <div class="card profile-card">
+        <h1 id="nextStepTitle"></h1>
+        <p id="nextStepText" class="subtle"></p>
+
+        <button id="nextStepPrimaryButton"></button>
+        <button id="nextStepSecondaryButton" class="secondary-button"></button>
+    </div>
+</section>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="script.js"></script>
+</body>
+</html>
