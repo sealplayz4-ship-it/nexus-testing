@@ -1432,6 +1432,23 @@ const deletePostButtonHTML = canDeletePost
       `
     : "";
 
+const displayedPostContent = post.edited_content || post.content;
+
+const canEditPost =
+    user &&
+    post.user_id === user.id;
+
+const editPostButtonHTML = canEditPost
+    ? `
+        <button
+            class="secondary-button edit-post-button"
+            data-post-id="${post.id}"
+        >
+            Edit Thread
+        </button>
+      `
+    : "";
+
 threadPost.innerHTML = `
     <div class="forum-post">
         <div class="forum-post-header">
@@ -1444,16 +1461,30 @@ threadPost.innerHTML = `
                      · ${post.profiles?.major || "Unknown major"}
                     ${compositeBadge}
                      · ${new Date(post.created_at).toLocaleDateString()}
+                     ${post.edited_at ? " · edited" : ""}
                  </p>
             </div>
             <span class="forum-category">${post.category || "General"}</span>
         </div>
 
-        <p>${post.content}</p>
+        <div id="postContent-${post.id}">
+            <p>${displayedPostContent}</p>
+        </div>
 
-        ${deletePostButtonHTML}
+        <div class="comment-actions" id="postActions-${post.id}">
+            ${editPostButtonHTML}
+            ${deletePostButtonHTML}
+        </div>
     </div>
 `;
+
+const editButton = threadPost.querySelector(".edit-post-button");
+
+if (editButton) {
+    editButton.addEventListener("click", () => {
+        showEditPostUI(post.id, displayedPostContent);
+    });
+}
 
     const profileLink = threadPost.querySelector(".profile-link");
 
@@ -1541,6 +1572,23 @@ const deleteButtonHTML = canDelete
       `
     : "";
 
+const displayedContent = comment.edited_content || comment.content;
+
+const canEdit =
+    user &&
+    comment.user_id === user.id;
+
+const editButtonHTML = canEdit
+    ? `
+        <button
+            class="secondary-button edit-comment-button"
+            data-comment-id="${comment.id}"
+        >
+            Edit
+        </button>
+      `
+    : "";
+
 commentEl.innerHTML = `
     <div class="message-header">
         <strong>
@@ -1548,12 +1596,21 @@ commentEl.innerHTML = `
                 ${author}
             </span>
         </strong>
-        <span class="score-date">${new Date(comment.created_at).toLocaleDateString()}</span>
+
+        <span class="score-date">
+            ${new Date(comment.created_at).toLocaleDateString()}
+            ${comment.edited_at ? " · edited" : ""}
+        </span>
     </div>
 
-    <p>${comment.content}</p>
+    <div id="commentContent-${comment.id}">
+        <p>${displayedContent}</p>
+    </div>
 
+<div class="comment-actions" id="commentActions-${comment.id}">
+    ${editButtonHTML}
     ${deleteButtonHTML}
+</div>
 `;
 
 const profileLink = commentEl.querySelector(".profile-link");
@@ -1563,6 +1620,15 @@ profileLink.addEventListener("click", () => {
 });
 
         threadComments.appendChild(commentEl);
+
+        const editButton = commentEl.querySelector(".edit-comment-button");
+
+if (editButton) {
+    editButton.addEventListener("click", () => {
+        showEditCommentUI(comment.id, displayedContent);
+    });
+}
+
     });
 }
 
@@ -1852,6 +1918,122 @@ function getTrustLabel(level) {
     if (level === 2) return "Active Member";
     if (level === 1) return "New Member";
     return "Unranked";
+}
+
+async function editForumComment(commentId) {
+    const textarea = document.getElementById(`editTextarea-${commentId}`);
+
+    if (!textarea) {
+        alert("Could not find edit box.");
+        return;
+    }
+
+    const trimmedContent = textarea.value.trim();
+
+    if (!trimmedContent) {
+        alert("Comment cannot be empty.");
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("forum_comments")
+        .update({
+            edited_content: trimmedContent,
+            edited_at: new Date().toISOString()
+        })
+        .eq("id", commentId)
+        .select();
+
+    if (error || !data || data.length === 0) {
+        console.error("Comment edit failed:", error);
+        alert("You do not have permission to edit this comment.");
+        return;
+    }
+
+    await loadForumComments(currentForumPostId);
+}
+
+async function editForumPost(postId) {
+    const textarea = document.getElementById(`editPostTextarea-${postId}`);
+
+    if (!textarea) {
+        alert("Could not find edit box.");
+        return;
+    }
+
+    const trimmedContent = textarea.value.trim();
+
+    if (!trimmedContent) {
+        alert("Post cannot be empty.");
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("forum_posts")
+        .update({
+            edited_content: trimmedContent,
+            edited_at: new Date().toISOString()
+        })
+        .eq("id", postId)
+        .select();
+
+    if (error || !data || data.length === 0) {
+        console.error("Post edit failed:", error);
+        alert("You do not have permission to edit this post.");
+        return;
+    }
+
+    await openForumThread(postId);
+}
+
+function showEditCommentUI(commentId, currentContent) {
+    const contentEl = document.getElementById(`commentContent-${commentId}`);
+    const actionsEl = document.getElementById(`commentActions-${commentId}`);
+
+    if (!contentEl) return;
+
+    if (actionsEl) {
+        actionsEl.classList.add("hidden");
+    }
+
+    contentEl.innerHTML = `
+        <textarea id="editTextarea-${commentId}" class="comment-edit-box">${currentContent}</textarea>
+
+        <div class="edit-actions">
+            <button class="secondary-button" onclick="editForumComment(${commentId})">
+                Save
+            </button>
+
+            <button class="secondary-button" onclick="loadForumComments(currentForumPostId)">
+                Cancel
+            </button>
+        </div>
+    `;
+}
+
+function showEditPostUI(postId, currentContent) {
+    const contentEl = document.getElementById(`postContent-${postId}`);
+    const actionsEl = document.getElementById(`postActions-${postId}`);
+
+    if (!contentEl) return;
+
+    if (actionsEl) {
+        actionsEl.classList.add("hidden");
+    }
+
+    contentEl.innerHTML = `
+        <textarea id="editPostTextarea-${postId}" class="comment-edit-box">${currentContent}</textarea>
+
+        <div class="edit-actions">
+            <button class="secondary-button" onclick="editForumPost(${postId})">
+                Save
+            </button>
+
+            <button class="secondary-button" onclick="openForumThread(${postId})">
+                Cancel
+            </button>
+        </div>
+    `;
 }
 
 const screens = {
