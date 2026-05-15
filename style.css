@@ -465,7 +465,7 @@ button.secondary-button:hover {
 .trust-card {
     margin-top: 32px;
     padding-top: 24px;
-    border-top: 2px solid #2a2a2a;
+    border-top: 1px solid #2a2a2a;
 }
 
 .profile-header {
@@ -903,4 +903,47 @@ button.secondary-button:hover {
 .profile-link:hover {
     color: white;
     text-decoration: underline;
+}
+
+.comment-edit-box {
+    width: 100%;
+    min-height: 100px;
+    margin-top: 10px;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: rgb(30, 30, 30);
+    color: white;
+    border: 1px solid rgb(70, 70, 70);
+    resize: vertical;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.comment-edit-box {
+    width: 100%;
+    min-height: 90px;
+    margin-top: 10px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: rgb(24, 24, 24);
+    color: white;
+    border: 1px solid rgb(70, 70, 70);
+    resize: vertical;
+}
+
+.comment-actions,
+.edit-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.edit-actions button,
+.comment-actions button {
+    margin-top: 0;
 }
