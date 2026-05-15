@@ -1257,6 +1257,25 @@ if (!compositeError && compositeRows) {
     });
 }
 
+const postIds = data.map(post => post.id);
+
+const { data: commentRows, error: commentCountError } = await supabaseClient
+    .from("forum_comments")
+    .select("post_id")
+    .in("post_id", postIds)
+    .eq("hidden", false);
+
+const replyCountMap = new Map();
+
+if (!commentCountError && commentRows) {
+    commentRows.forEach(comment => {
+        replyCountMap.set(
+            comment.post_id,
+            (replyCountMap.get(comment.post_id) || 0) + 1
+        );
+    });
+}
+
     data.forEach(post => {
         const author =
             post.profiles?.display_name ||
@@ -1264,6 +1283,11 @@ if (!compositeError && compositeRows) {
             "Unknown User";
 
         const composite = compositeMap.get(post.user_id);
+
+        const replyCount = replyCountMap.get(post.id) || 0;
+
+const replyText =
+    replyCount === 1 ? "1 reply" : `${replyCount} replies`;
 
 const compositeBadge = composite
     ? ` · Composite: ${Number(composite.composite_percentile).toFixed(2)}%`
@@ -1291,8 +1315,15 @@ postEl.innerHTML = `
                 · ${new Date(post.created_at).toLocaleDateString()}
             </p>
         </div>
-        <span class="forum-category">${post.category || "General"}</span>
-    </div>
+<div class="forum-post-meta-right">
+    <span class="forum-replies">
+        ${replyText}
+    </span>
+
+    <span class="forum-category">
+        ${post.category || "General"}
+    </span>
+</div>    </div>
 
     <p>${post.content}</p>
 `;
@@ -1549,6 +1580,29 @@ profiles!forum_comments_user_id_fkey (
         return;
     }
 
+    const commentIds = data.map(comment => comment.id);
+
+const { data: upvoteRows, error: upvoteError } = await supabaseClient
+    .from("forum_comment_upvotes")
+    .select("comment_id, user_id")
+    .in("comment_id", commentIds);
+
+const upvoteCountMap = new Map();
+const userUpvotedSet = new Set();
+
+if (!upvoteError && upvoteRows) {
+    upvoteRows.forEach(vote => {
+        upvoteCountMap.set(
+            vote.comment_id,
+            (upvoteCountMap.get(vote.comment_id) || 0) + 1
+        );
+
+        if (user && vote.user_id === user.id) {
+            userUpvotedSet.add(vote.comment_id);
+        }
+    });
+}
+
     threadComments.innerHTML = "";
 
     data.forEach(comment => {
@@ -1573,6 +1627,20 @@ const deleteButtonHTML = canDelete
     : "";
 
 const displayedContent = comment.edited_content || comment.content;
+
+const upvoteCount = upvoteCountMap.get(comment.id) || 0;
+const hasUpvoted = userUpvotedSet.has(comment.id);
+
+const upvoteButtonHTML = user
+    ? `
+        <button
+            class="secondary-button comment-upvote-button ${hasUpvoted ? "active-upvote" : ""}"
+            data-comment-id="${comment.id}"
+        >
+            ▲ ${upvoteCount}
+        </button>
+      `
+    : `<span class="forum-replies">▲ ${upvoteCount}</span>`;
 
 const canEdit =
     user &&
@@ -1608,6 +1676,7 @@ commentEl.innerHTML = `
     </div>
 
 <div class="comment-actions" id="commentActions-${comment.id}">
+    ${upvoteButtonHTML}
     ${editButtonHTML}
     ${deleteButtonHTML}
 </div>
@@ -1621,6 +1690,14 @@ profileLink.addEventListener("click", () => {
 
         threadComments.appendChild(commentEl);
 
+        const upvoteButton = commentEl.querySelector(".comment-upvote-button");
+
+if (upvoteButton) {
+    upvoteButton.addEventListener("click", () => {
+        toggleCommentUpvote(comment.id, hasUpvoted);
+    });
+}
+
         const editButton = commentEl.querySelector(".edit-comment-button");
 
 if (editButton) {
@@ -1630,6 +1707,39 @@ if (editButton) {
 }
 
     });
+}
+
+async function toggleCommentUpvote(commentId, hasUpvoted) {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) {
+        alert("Sign in to upvote comments.");
+        return;
+    }
+
+    let error;
+
+    if (hasUpvoted) {
+        ({ error } = await supabaseClient
+            .from("forum_comment_upvotes")
+            .delete()
+            .eq("comment_id", commentId)
+            .eq("user_id", user.id));
+    } else {
+        ({ error } = await supabaseClient
+            .from("forum_comment_upvotes")
+            .insert({
+                comment_id: commentId,
+                user_id: user.id
+            }));
+    }
+
+    if (error) {
+        console.error("Comment upvote failed:", error);
+        return;
+    }
+
+    await loadForumComments(currentForumPostId);
 }
 
 async function createForumComment() {
