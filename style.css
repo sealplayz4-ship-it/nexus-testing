@@ -2,7 +2,7 @@ body {
     font-family: Inter, sans-serif;
     margin: 0;
     color: white;
-    line-height: 2;
+    line-height: 1.6;
     min-height: 100%;
     overflow-x: hidden;
     background-color: rgb(19, 19, 19);
@@ -65,10 +65,11 @@ button:active {
 .home-card {
     width: 700px;
     max-width: 90%;
-    padding: 40px;
+    padding: 32px 40px 40px;
     background-color: #161616;
     box-shadow: 0 0 30px rgba(0,0,0,0.35);
     border-radius: 16px;
+    margin-top: 0;
 }
 
 #questionText {
@@ -142,10 +143,16 @@ button:active {
     margin: 0 auto;
 
     padding: 40px;
+    margin-top: 40px;
+    margin-bottom: 40px;
 
     background-color: #161616;
     box-shadow: 0 0 30px rgba(0,0,0,0.35);
     border-radius: 16px;
+}
+
+#resultScreen {
+    justify-content: flex-start;
 }
 
 .screen {
@@ -281,6 +288,20 @@ html, body {
     border-radius: 16px;
 }
 
+.leaderboard-section {
+    margin-top: 32px;
+}
+
+.leaderboard-section + .leaderboard-section {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid #2a2a2a;
+}
+
+.leaderboard-section h2 {
+    margin-bottom: 4px;
+}
+
 .leaderboard-entry {
     display: flex;
     gap: 20px;
@@ -311,7 +332,7 @@ html, body {
 }
 
 #title {
-    font-size: 42px;
+    font-size: 34px;
 }
 
 #codeBlock {
@@ -961,4 +982,171 @@ button.secondary-button:hover {
 .comment-actions .secondary-button {
     margin-top: 0;
     margin-left: 0;
+}
+
+.selected-answer {
+    background-color: lightblue;
+    border: 2px solid #6ea8ff;
+    transform: scale(1.02);
+}
+
+.landing-card {
+    width: min(900px, 92vw);
+    background: #151515;
+    border: 1px solid #262626;
+    border-radius: 14px;
+    padding: 42px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+.landing-card h1 {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+}
+
+.benchmark-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 32px;
+}
+
+.benchmark-option-card {
+    background: #0f0f0f;
+    border: 1px solid #2b2b2b;
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.benchmark-option-card:hover {
+    transform: translateY(-3px);
+    border-color: #4f8cff;
+    background: #131313;
+}
+
+.locked-card {
+    opacity: 0.78;
+}
+
+.benchmark-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.benchmark-card-header h2 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.benchmark-option-card p {
+    color: #c7c7c7;
+    line-height: 1.55;
+    margin-bottom: 22px;
+}
+
+.benchmark-status {
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 5px 10px;
+    white-space: nowrap;
+}
+
+.unlocked-status {
+    color: #dbeafe;
+    background: rgba(79, 140, 255, 0.18);
+    border: 1px solid rgba(79, 140, 255, 0.45);
+}
+
+.locked-status {
+    color: #d1d5db;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.benchmark-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.benchmark-meta-row span {
+    color: #aaa;
+    font-size: 0.85rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 999px;
+    padding: 6px 10px;
+}
+
+@media (max-width: 720px) {
+    .landing-card {
+        padding: 28px;
+    }
+
+    .benchmark-card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.back-button {
+    background: transparent;
+    color: #9ca3af;
+    border: none;
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.back-button:hover {
+    background: transparent;
+    color: white;
+    text-decoration: underline;
+}
+
+.detail-card-top {
+    margin-bottom: 14px;
+}
+
+.benchmark-detail-card h1 {
+    font-size: 34px;
+    margin-top: 0;
+    margin-bottom: 18px;
+    line-height: 1.2;
+}
+
+.benchmark-detail-card {
+    width: min(820px, 92vw);
+    padding: 30px 42px 34px;
+    background-color: #161616;
+    box-shadow: 0 0 30px rgba(0,0,0,0.35);
+    border: 1px solid #242424;
+    border-radius: 16px;
+    color: #d4d4d4;
+}
+
+.benchmark-start-button {
+    margin-top: 22px;
+    min-width: 160px;
+    font-weight: 600;
+}
+
+.detail-section {
+    margin-top: 28px;
+}
+
+.detail-cta-section {
+    margin-top: 28px;
+    padding-top: 12px;
+    border-top: 1px solid #242424;
+}
+
+.detail-section h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
 }
