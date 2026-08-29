@@ -1,10 +1,10 @@
-console.log("Script loaded");
-
 document.addEventListener("DOMContentLoaded", () => {
 const startButton = document.getElementById("startButton");
 
-    document.getElementById("homeScreen").classList.remove("hidden");
+    document.getElementById("benchmarkLanding").classList.remove("hidden");
 
+
+    document.getElementById("homeScreen").classList.add("hidden");
     document.getElementById("testScreen").classList.add("hidden");
     document.getElementById("sectionScreen").classList.add("hidden");
     document.getElementById("resultScreen").classList.add("hidden");
@@ -21,6 +21,8 @@ const startButton = document.getElementById("startButton");
 
 let questions = []
 let questionBank = [];
+
+let sectionScores = {};
 
 const sections = [
     {
@@ -48,12 +50,113 @@ const sections = [
     }
 ];
 
-const sectionScores = {
-  ar: 0,
-  ds: 0,
-  s: 0,
-  cc: 0,
+const advancedSections = [
+    {
+        key: "architecture",
+        name: "Systems Architecture",
+        description: "This section evaluates architectural tradeoffs, scalability, reliability, and system design decisions."
+    },
+    {
+        key: "optimization",
+        name: "Optimization and Performance",
+        description: "This section evaluates bottlenecks, asymptotic reasoning, caching, memory, latency, and performance tradeoffs."
+    },
+    {
+        key: "abstraction",
+        name: "Abstraction and Modeling",
+        description: "This section evaluates how well you identify assumptions, model systems, and choose useful abstractions."
+    },
+    {
+        key: "concurrency",
+        name: "Concurrent and Distributed Reasoning",
+        description: "This section evaluates race conditions, synchronization, consistency, distributed coordination, and failure modes."
+    },
+    {
+        key: "debugging",
+        name: "Debugging and Failure Analysis",
+        description: "This section evaluates your ability to diagnose bugs, trace failures, and identify root causes."
+    }
+];
+
+const generalCategoryNames = {
+    ar: "Analytical Reasoning",
+    ds: "Data Structures & Algorithms",
+    s: "Systems",
+    cc: "Code Comprehension"
 };
+
+const advancedCategoryNames = {
+    architecture: "Systems Architecture",
+    optimization: "Optimization & Performance",
+    abstraction: "Abstraction & Modeling",
+    concurrency: "Concurrent & Distributed Reasoning",
+    debugging: "Debugging & Failure Analysis"
+};
+
+const generalQuestionsPerSection = 7;
+const advancedQuestionsPerSection = 5;
+
+const generalSectionScores = {
+    ar: 0,
+    ds: 0,
+    s: 0,
+    cc: 0
+};
+
+const advancedSectionScores = {
+    architecture: 0,
+    optimization: 0,
+    abstraction: 0,
+    concurrency: 0,
+    debugging: 0
+};
+
+function getSectionScoreDefaults() {
+    return activeBenchmarkType === "general_cs"
+        ? { ...generalSectionScores }
+        : { ...advancedSectionScores };
+}
+
+function resetSectionScores() {
+    sectionScores = getSectionScoreDefaults();
+}
+
+function resolveScoreValue(data, candidates) {
+    if (!data) return 0;
+
+    for (const candidate of candidates) {
+        if (Object.prototype.hasOwnProperty.call(data, candidate) && data[candidate] !== undefined && data[candidate] !== null) {
+            return data[candidate];
+        }
+    }
+
+    return 0;
+}
+
+function applyGradedSectionScores(data) {
+    if (activeBenchmarkType === "general_cs") {
+        sectionScores = {
+            ...sectionScores,
+            ar: resolveScoreValue(data, ["analytical_reasoning", "analyticalReasoning", "analytical_reasoning_score", "ar"]),
+            ds: resolveScoreValue(data, ["data_structures_algorithms", "dataStructuresAlgorithms", "data_structures_algorithms_score", "ds"]),
+            s: resolveScoreValue(data, ["systems", "systems_score", "s"]),
+            cc: resolveScoreValue(data, ["code_comprehension", "codeComprehension", "code_comprehension_score", "cc"])
+        };
+        return;
+    }
+
+    sectionScores = {
+        ...sectionScores,
+        architecture: resolveScoreValue(data, ["architecture", "systems_architecture", "systemsArchitecture", "architecture_score"]),
+        optimization: resolveScoreValue(data, ["optimization", "optimization_and_performance", "optimizationAndPerformance", "performance_optimization", "performance"]),
+        abstraction: resolveScoreValue(data, ["abstraction", "abstraction_and_modeling", "abstractionAndModeling", "modeling"]),
+        concurrency: resolveScoreValue(data, ["concurrency", "concurrent_and_distributed_reasoning", "concurrentAndDistributedReasoning", "distributed_reasoning"]),
+        debugging: resolveScoreValue(data, ["debugging", "debugging_and_failure_analysis", "debuggingAndFailureAnalysis", "failure_analysis"])
+    };
+}
+
+let activeBenchmarkType = "general_cs";
+let activeSections = sections;
 
 const TRANSITION_TIME = 250;
 
@@ -90,10 +193,11 @@ const answerButtons = document.getElementById("answerButtons");
 
 let scoreSavedThisSession = false;
 
-async function loadQuestionsFromSupabase() {
+async function loadQuestionsFromSupabase(currentTest) {
     const { data, error } = await supabaseClient
         .from("public_questions")
-        .select("*");
+        .select("*")
+        .eq("test_type", currentTest)
 
     if (error) {
         console.error("Question load failed:", error);
@@ -112,14 +216,36 @@ function shuffleArray(array) {
 }
 
 function buildRandomTest() {
+    const questionsPerSection = 7;
+
+    sectionOrder = "";
+
+    questions = [];
+
+      if (activeBenchmarkType === "general_cs") {
+
+        sectionOrder = ["ar","ds","s","cc"];
+
+    } else {
+
+        sectionOrder = [
+            "architecture",
+            "optimization",
+            "abstraction",
+            "concurrency",
+            "debugging"
+        ];
+    }
+
+    sectionScores = getSectionScoreDefaults();
+
+    console.log("questionBank length:", questionBank.length);
+
+    console.log(activeBenchmarkType);
+    console.log(sectionOrder);
     console.log("questionBank at build time:", questionBank);
     console.log("questionBank length:", questionBank.length);
     console.log("Sections at build time:", [...new Set(questionBank.map(q => q.section))]);
-
-    const sectionOrder = ["ar", "ds", "s", "cc"];
-    const questionsPerSection = 7;
-
-    questions = [];
 
     sectionOrder.forEach(section => {
         const sectionQuestions = questionBank.filter(q =>
@@ -182,7 +308,7 @@ function loadQuestion(animated = true) {
 
     function populateQuestion() {
 
-        questionEl.textContent = question.question;
+        questionEl.innerHTML = question.question.replaceAll("[[BR]]", "<br>");;
 
         const codeBlock = document.getElementById("codeBlock");
 
@@ -205,13 +331,13 @@ if (question.code) {
 
             button.addEventListener("click", () => {
 
-                Array.from(answerButtons.children).forEach(btn => {
-                    btn.style.backgroundColor = "";
-                });
+Array.from(answerButtons.children).forEach(btn => {
+    btn.classList.remove("selected-answer");
+});
 
-                button.style.backgroundColor = "lightblue";
+button.classList.add("selected-answer");
 
-                selectedAnswer = index;
+selectedAnswer = index;
             });
 
             answerButtons.appendChild(button);
@@ -251,8 +377,11 @@ function showScreen(screenToShow) {
 }
 
 startButton.addEventListener("click", async function () {
+    activeBenchmarkType = "general_cs";
+activeSections = sections;
+
     if (questionBank.length === 0) {
-        await loadQuestionsFromSupabase();
+        await loadQuestionsFromSupabase("general_cs");
     }
 
     buildRandomTest();
@@ -264,10 +393,7 @@ startButton.addEventListener("click", async function () {
     selectedAnswer = null;
     userAnswers = [];
 
-    sectionScores.ar = 0;
-    sectionScores.ds = 0;
-    sectionScores.s = 0;
-    sectionScores.cc = 0;
+    resetSectionScores();
 
     switchScreen(screens.home, screens.section, () => {
         showSection(0);
@@ -279,7 +405,7 @@ await trackEvent("started_test");
 
 function showSection(index) {
 
-    const section = sections[index];
+    const section = activeSections[index];
 
     document.getElementById("sectionTitle").textContent = section.name;
     document.getElementById("sectionDescription").textContent = section.description;
@@ -316,6 +442,25 @@ function updateProgressBar() {
 }
 
 function showResults() {
+
+    console.log(Object.keys(sectionScores));
+
+let categoryNames;
+
+if (activeBenchmarkType === "general_cs") {
+    categoryNames = generalCategoryNames;
+} else {
+    categoryNames = advancedCategoryNames;
+}
+
+let questionsPerSection;
+
+if (activeBenchmarkType === "general_cs") {
+    questionsPerSection = generalQuestionsPerSection;
+} else {
+    questionsPerSection = advancedQuestionsPerSection;
+}
+
     const scoreText = document.getElementById("scoreText");
     const performanceText = document.getElementById("performanceText");
     const categoryResults = document.getElementById("categoryResults");
@@ -333,17 +478,15 @@ function showResults() {
         performanceText.textContent = "Beginner level overall performance.";
     }
 
-    const categoryNames = {
-        ar: "Analytical Reasoning",
-        ds: "Data Structures & Algorithms",
-        s: "Systems",
-        cc: "Code Comprehension"
-    };
-
     categoryResults.innerHTML = "";
 
+console.log("Category names:", categoryNames);
+console.log("Section scores:", sectionScores);
+
     for (const [key, value] of Object.entries(sectionScores)) {
-        const percent = (value / 7) * 100;
+        console.log(key, value, categoryNames[key]);
+        const displayValue = Number.isFinite(value) ? value : 0;
+        const percent = (displayValue / questionsPerSection) * 100;
 
         const row = document.createElement("div");
         row.classList.add("category-row");
@@ -351,7 +494,7 @@ function showResults() {
         row.innerHTML = `
             <div class="category-label">
                 <span>${categoryNames[key]}</span>
-                <span>${value} / 7</span>
+                <span>${displayValue} / ${questionsPerSection}</span>
             </div>
 
             <div class="category-bar-bg">
@@ -673,7 +816,8 @@ async function saveScoreToSupabase() {
 
     const { data, error } = await supabaseClient
         .rpc("grade_attempt", {
-            user_answers: userAnswers
+            user_answers: userAnswers,
+            benchmark_type: activeBenchmarkType
         });
 
     if (error) {
@@ -683,10 +827,7 @@ async function saveScoreToSupabase() {
     }
 
     score = data.total_score;
-    sectionScores.ar = data.analytical_reasoning;
-    sectionScores.ds = data.data_structures_algorithms;
-    sectionScores.s = data.systems;
-    sectionScores.cc = data.code_comprehension;
+    applyGradedSectionScores(data);
 
     const authPrompt = document.getElementById("resultAuthPrompt");
 
@@ -845,73 +986,173 @@ if (compositeError) {
 }
 
 async function loadLeaderboard() {
-    const leaderboardList = document.getElementById("leaderboardList");
+    const advancedList = document.getElementById("advancedLeaderboardList");
+    const generalList = document.getElementById("generalLeaderboardList");
 
-    leaderboardList.innerHTML = "<p class='subtle'>Loading leaderboard...</p>";
+    advancedList.innerHTML = "<p class='subtle'>Loading advanced rankings...</p>";
+    generalList.innerHTML = "<p class='subtle'>Loading general rankings...</p>";
 
-const { data, error } = await supabaseClient
-.from("composite_percentiles")
-.select(`
-    *,
-    profiles (
-        username,
-        display_name,
-        school,
-        major
-    )
-`)
-.order("composite_percentile", { ascending: false })
-.limit(100);
+    /*
+     * ADVANCED LEADERBOARD
+     *
+     * Advanced scores are individual advanced benchmark attempts.
+     */
+    const {
+        data: advancedData,
+        error: advancedError
+    } = await supabaseClient
+        .from("test_attempts")
+        .select(`
+            id,
+            user_id,
+            benchmark_type,
+            total_score,
+            created_at,
+            profiles (
+                username,
+                display_name,
+                school,
+                major
+            )
+        `)
+        .eq("benchmark_type", "advanced_cs")
+        .order("total_score", { ascending: false })
+        .order("created_at", { ascending: true })
+        .limit(100);
 
-    if (error) {
-        console.error("Leaderboard load failed:", error);
-        leaderboardList.innerHTML = "<p class='subtle'>Could not load leaderboard.</p>";
+    if (advancedError) {
+        console.error("Advanced leaderboard load failed:", advancedError);
+        advancedList.innerHTML =
+            "<p class='subtle'>Could not load advanced leaderboard.</p>";
+    } else if (!advancedData || advancedData.length === 0) {
+        advancedList.innerHTML =
+            "<p class='subtle'>No advanced scores yet.</p>";
+    } else {
+        advancedList.innerHTML = "";
+
+        advancedData.forEach((scoreRow, index) => {
+            const profile = scoreRow.profiles;
+
+            const name =
+                profile?.display_name ||
+                profile?.username ||
+                "Anonymous User";
+
+            const entry = document.createElement("div");
+            entry.classList.add("leaderboard-entry");
+
+            entry.addEventListener("click", () => {
+                openPublicProfile(scoreRow.user_id);
+            });
+
+            entry.innerHTML = `
+                <div class="leaderboard-rank">
+                    #${index + 1}
+                </div>
+
+                <div class="leaderboard-main">
+                    <h3>${name} — ${scoreRow.total_score}/28</h3>
+
+                    <p class="subtle">
+                        Advanced CS Benchmark
+                    </p>
+
+                    <p class="subtle">
+                        ${profile?.school || "Unknown school"} ·
+                        ${profile?.major || "Unknown major"}
+                    </p>
+                </div>
+            `;
+
+            advancedList.appendChild(entry);
+        });
+    }
+
+
+    /*
+     * GENERAL LEADERBOARD
+     *
+     * Keep the existing composite-percentile system.
+     */
+    const {
+        data: generalData,
+        error: generalError
+    } = await supabaseClient
+        .from("composite_percentiles")
+        .select(`
+            *,
+            profiles (
+                username,
+                display_name,
+                school,
+                major
+            )
+        `)
+        .order("composite_percentile", { ascending: false })
+        .limit(100);
+
+    if (generalError) {
+        console.error("General leaderboard load failed:", generalError);
+        generalList.innerHTML =
+            "<p class='subtle'>Could not load general leaderboard.</p>";
         return;
     }
 
-    if (!data || data.length === 0) {
-        leaderboardList.innerHTML = "<p class='subtle'>No saved scores yet.</p>";
+    if (!generalData || generalData.length === 0) {
+        generalList.innerHTML =
+            "<p class='subtle'>No general scores yet.</p>";
         return;
     }
 
-    leaderboardList.innerHTML = "";
+    generalList.innerHTML = "";
 
-data.forEach((scoreRow, index) => {
-    const profile = scoreRow.profiles;
+    generalData.forEach((scoreRow, index) => {
+        const profile = scoreRow.profiles;
 
-    const name =
-        profile?.display_name ||
-        profile?.username ||
-        "Anonymous User";
+        const name =
+            profile?.display_name ||
+            profile?.username ||
+            "Anonymous User";
 
-    const entry = document.createElement("div");
-    entry.classList.add("leaderboard-entry");
+        const entry = document.createElement("div");
+        entry.classList.add("leaderboard-entry");
 
-    entry.addEventListener("click", () => {
-        openPublicProfile(scoreRow.user_id);
+        entry.addEventListener("click", () => {
+            openPublicProfile(scoreRow.user_id);
+        });
+
+        entry.innerHTML = `
+            <div class="leaderboard-rank">
+                #${index + 1}
+            </div>
+
+            <div class="leaderboard-main">
+                <h3>${name} — ${scoreRow.average_score}/28</h3>
+
+                <p class="subtle">
+                    ${scoreRow.composite_percentile.toFixed(2)}% composite percentile
+                </p>
+
+                <p class="subtle">
+                    Confidence: ${scoreRow.confidence_level}
+                </p>
+
+                <p class="subtle">
+                    ${profile?.school || "Unknown school"} ·
+                    ${profile?.major || "Unknown major"}
+                </p>
+
+                <p class="subtle">
+                    Analytical: ${scoreRow.average_analytical_reasoning}/7 ·
+                    DSA: ${scoreRow.average_data_structures_algorithms}/7 ·
+                    Systems: ${scoreRow.average_systems}/7 ·
+                    Code: ${scoreRow.average_code_comprehension}/7
+                </p>
+            </div>
+        `;
+
+        generalList.appendChild(entry);
     });
-
-    entry.innerHTML = `
-        <div class="leaderboard-rank">#${index + 1}</div>
-
-        <div class="leaderboard-main">
-            <h3>${name} — ${scoreRow.average_score}/28</h3>
-            <p class="subtle">${scoreRow.composite_percentile.toFixed(2)}% composite percentile</p>
-            Confidence: ${scoreRow.confidence_level}
-            <p class="subtle">
-                ${profile?.school || "Unknown school"} · ${profile?.major || "Unknown major"}
-            </p>
-            <p class="subtle">
-                Analytical: ${scoreRow.average_analytical_reasoning}/7 ·
-                DSA: ${scoreRow.average_data_structures_algorithms}/7 ·
-                Systems: ${scoreRow.average_systems}/7 ·
-                Code: ${scoreRow.average_code_comprehension}/7
-            </p>
-        </div>
-    `;
-
-    leaderboardList.appendChild(entry);
-});
 }
 
 async function sendMessageToPublicProfile() {
@@ -1811,7 +2052,8 @@ async function gradeAttempt() {
 
     const { data, error } = await supabaseClient
         .rpc("grade_attempt", {
-            user_answers: userAnswers
+            user_answers: userAnswers,
+            benchmark_type: activeBenchmarkType
         });
 
     if (error) {
@@ -1821,12 +2063,12 @@ async function gradeAttempt() {
 
     score = data.total_score;
 
-    sectionScores.ar = data.analytical_reasoning;
-    sectionScores.ds = data.data_structures_algorithms;
-    sectionScores.s = data.systems;
-    sectionScores.cc = data.code_comprehension;
+    applyGradedSectionScores(data);
 
     scoreSavedThisSession = !!user;
+
+    console.log("Returned data:", data);
+    console.log("Section scores:", sectionScores);
 
     showResults();
 
@@ -2146,8 +2388,47 @@ function showEditPostUI(postId, currentContent) {
     `;
 }
 
+async function hasUnlockedAdvancedCS() {
+    return true;
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+
+    if (!user) return false;
+
+    const { data, error } = await supabaseClient
+        .from("score_percentiles")
+        .select("total_score")
+        .eq("user_id", user.id)
+        .gte("total_score", 26)
+        .limit(1);
+
+    if (error) {
+        console.error("Advanced unlock check failed:", error);
+        return false;
+    }
+
+    return data && data.length > 0;
+}
+
+async function updateAdvancedTestButton() {
+    const advancedButton = document.getElementById("advancedTestButton");
+
+    if (!advancedButton) return;
+
+    const unlocked = await hasUnlockedAdvancedCS();
+
+    if (unlocked) {
+        advancedButton.disabled = false;
+        advancedButton.textContent = "Start Advanced CS Benchmark";
+    } else {
+        advancedButton.disabled = true;
+        advancedButton.textContent = "Advanced CS Benchmark — Unlock at 26/28";
+    }
+}
+
 const screens = {
     home: document.getElementById("homeScreen"),
+    advancedHome: document.getElementById("advancedHomeScreen"),
     test: document.getElementById("testScreen"),
     section: document.getElementById("sectionScreen"),
     result: document.getElementById("resultScreen"),
@@ -2159,10 +2440,11 @@ const screens = {
     thread: document.getElementById("threadScreen"),
     forum: document.getElementById("forumScreen"),
     forumThread: document.getElementById("forumThreadScreen"),
-    nextStep: document.getElementById("nextStepScreen")
+    nextStep: document.getElementById("nextStepScreen"),
+    benchmarkLanding: document.getElementById("benchmarkLanding")
 };
 
-let activeScreen = screens.home;
+let activeScreen = screens.benchmarkLanding;
 
 document.getElementById("nextButton")
 .addEventListener("click", function() {
@@ -2219,18 +2501,20 @@ document.getElementById("restartButton")
     score = 0;
     selectedAnswer = null;
 
-    sectionScores.ar = 0;
-    sectionScores.ds = 0;
-    sectionScores.s = 0;
-    sectionScores.cc = 0;
+    resetSectionScores();
 
-    switchScreen(screens.result, screens.home);
+    switchScreen(screens.result, screens.benchmarkLanding);
     scoreSavedThisSession = false;
+});
+
+document.getElementById("generalCSCard")
+.addEventListener("click", () => {
+    switchScreen(activeScreen, screens.home);
 });
 
 document.getElementById("navQuiz")
 .addEventListener("click", () => {
-    switchScreen(activeScreen, screens.home);
+    switchScreen(activeScreen, screens.benchmarkLanding);
 });
 
 document.getElementById("navLeaderboard")
@@ -2259,3 +2543,39 @@ document.getElementById("navForum")
 
 document.getElementById("inboxNavButton")
 .addEventListener("click", openInbox);
+
+document.getElementById("advancedCSCard")
+.addEventListener("click", async () => {
+    const unlocked = await hasUnlockedAdvancedCS();
+
+    if (!unlocked) {
+        alert("Score 26/28 or higher on the general CS benchmark to unlock this test.");
+        return;
+    }
+
+    switchScreen(activeScreen, screens.advancedHome)
+});
+
+document.getElementById("startAdvancedButton").addEventListener("click", async function () {
+    activeBenchmarkType = "advanced_cs";
+    activeSections = advancedSections;
+
+    await loadQuestionsFromSupabase("advanced_cs");
+
+    buildRandomTest();
+
+    currentQuestion = 0;
+    currentSectionIndex = 0;
+    previousSection = "ar";
+    score = 0;
+    selectedAnswer = null;
+    userAnswers = [];
+
+    resetSectionScores();
+
+    switchScreen(screens.advancedHome, screens.section, () => {
+        showSection(0);
+    });
+
+    await trackEvent("started_advanced_test");
+});
