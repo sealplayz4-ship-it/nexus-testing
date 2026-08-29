@@ -3,7 +3,7 @@
 
 <head>
     <title> Nexus - CS Benchmark</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -28,8 +28,58 @@
 
 <div class="container">
 
+    <div id="benchmarkLanding" class="screen active">
+    <div class="landing-card">
+        <h1>Nexus Benchmarks</h1>
+        <p class="subtle">
+            Choose a benchmark to measure your CS reasoning, compare scores, and unlock deeper assessments.
+        </p>
+
+        <div class="benchmark-card-grid">
+            <div class="benchmark-option-card" id="generalCSCard">
+                <div class="benchmark-card-header">
+                    <h2>General CS Benchmark</h2>
+                    <span class="benchmark-status unlocked-status">Available</span>
+                </div>
+
+                <p>
+                    Test your performance across foundational computer science reasoning, systems, data structures, and code comprehension.
+                </p>
+
+                <div class="benchmark-meta-row">
+                    <span>~20–30 min</span>
+                    <span>28 questions</span>
+                </div>
+            </div>
+
+            <div class="benchmark-option-card locked-card" id="advancedCSCard">
+                <div class="benchmark-card-header">
+                    <h2>Advanced CS Benchmark</h2>
+                    <span class="benchmark-status locked-status">Locked</span>
+                </div>
+
+                <p>
+                    Higher-level assessment focused on systems architecture, optimization, abstraction, concurrency, and debugging.
+                </p>
+
+                <div class="benchmark-meta-row">
+                    <span>Unlocks at 26/28</span>
+                    <span>Advanced ranking</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="homeScreen" class = "screen">
-    <div class="home-card">
+    <div class="benchmark-detail-card">
+
+<div class="detail-card-top">
+    <button class="back-button" onclick="switchScreen(activeScreen, screens.benchmarkLanding)">
+        ← Benchmarks
+    </button>
+</div>
+    
     <h1 id = "title">Nexus - CS Benchmark</h1>
     <p>Benchmark your aptitude across core CS domains.<br>
     Compare your results to other students.</p>
@@ -47,8 +97,44 @@ Pseudocode conventions: <br>
 • Variables are passed by reference unless otherwise stated. <br>
 • Assume loops terminate if condition becomes false after update <br> <br>
 Please do not access outside resources when taking this test. Completion should take approximately 30 minutes. The assessment is experimental and feedback is appreciated.</p>
-<button id="startButton">Start</button>
+<div class="detail-cta-section">
+<button id="startButton" class="benchmark-start-button">Start Benchmark</button>
 </div>
+</div>
+</div>
+
+<div id="advancedHomeScreen" class="screen hidden">
+    <div class="benchmark-detail-card">
+<div class="detail-card-top">
+    <button class="back-button" onclick="switchScreen(activeScreen, screens.benchmarkLanding)">
+        ← Benchmarks
+    </button>
+</div>
+
+        <h1>Advanced CS Benchmark</h1>
+
+        <p>
+            A higher-level assessment for users who performed strongly on the general CS benchmark.
+        </p>
+
+        <p id="introParagraph">
+            What this benchmark measures:<br>
+
+            • Systems architecture<br>
+            • Optimization and performance<br>
+            • Abstraction and modeling<br>
+            • Concurrent and distributed reasoning<br>
+            • Debugging and failure analysis<br><br>
+
+            This benchmark is designed to differentiate high-performing users more precisely.
+            Questions may involve more ambiguity, tradeoffs, assumptions, and real-world engineering constraints.
+        </p>
+<div class="detail-cta-section">
+<button id="startAdvancedButton" class="benchmark-start-button">
+    Start Advanced Benchmark
+</button>
+</div>
+    </div>
 </div>
 
 <div id="testScreen" class="screen hidden">
@@ -115,9 +201,25 @@ Please do not access outside resources when taking this test. Completion should 
 <div id="leaderboardScreen" class="screen hidden">
     <div class="leaderboard-card">
         <h1>Leaderboard</h1>
-        <p class="subtle">Top saved Nexus benchmark scores.</p>
+        <p class="subtle">
+            Advanced benchmark scores are ranked first, followed by general benchmark scores.
+        </p>
 
-        <div id="leaderboardList"></div>
+        <div class="leaderboard-section">
+            <h2>Advanced CS</h2>
+            <p class="subtle">
+                Users who have completed the Advanced CS Benchmark.
+            </p>
+            <div id="advancedLeaderboardList"></div>
+        </div>
+
+        <div class="leaderboard-section">
+            <h2>General CS</h2>
+            <p class="subtle">
+                Ranked by composite performance across saved General CS attempts.
+            </p>
+            <div id="generalLeaderboardList"></div>
+        </div>
     </div>
 </div>
 
@@ -345,6 +447,6 @@ Please do not access outside resources when taking this test. Completion should 
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="script.js?v=3"></script>
+<script src="script.js?v=4"></script>
 </body>
 </html>
